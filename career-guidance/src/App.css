@@ -1,38 +1,262 @@
-.App {
+/* src/App.css - BLACK THEME */
+:root {
+  /* Black Theme Colors */
+  --black: #000000;
+  --charcoal: #0a0a0a;
+  --dark-gray: #1a1a1a;
+  --medium-gray: #2d2d2d;
+  --light-gray: #404040;
+  
+  /* Blue Accents */
+  --navy: #001f3f;
+  --royal-blue: #003366;
+  --electric-blue: #0074D9;
+  --sky-blue: #7FDBFF;
+  
+  /* Orange Accents */
+  --dark-orange: #FF851B;
+  --vibrant-orange: #FF4136;
+  --gold: #FFDC00;
+  --amber: #FFB000;
+  
+  /* Text Colors */
+  --white: #ffffff;
+  --off-white: #f8f9fa;
+  --silver: #c0c0c0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--black);
+  color: var(--off-white);
+  line-height: 1.6;
+}
+
+/* Enhanced Card Styles - Black Theme */
+.elegant-card {
+  background: var(--dark-gray);
+  border: 2px solid var(--light-gray);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.elegant-card:hover {
+  border-color: var(--electric-blue);
+  box-shadow: 0 6px 12px rgba(0, 116, 217, 0.2);
+}
+
+/* Status Badges */
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Header Styles */
+.professional-header {
+  background: linear-gradient(135deg, var(--charcoal) 0%, var(--dark-gray) 100%);
+  color: var(--white);
+  border-bottom: 3px solid var(--electric-blue);
+}
+
+/* Stat Card Colors */
+.stat-card-primary { 
+  border-left: 4px solid var(--electric-blue);
+  background: linear-gradient(135deg, var(--dark-gray) 0%, #0f1a2d 100%);
+}
+
+.stat-card-success { 
+  border-left: 4px solid var(--dark-orange);
+  background: linear-gradient(135deg, var(--dark-gray) 0%, #2d1a0f 100%);
+}
+
+.stat-card-warning { 
+  border-left: 4px solid var(--gold);
+  background: linear-gradient(135deg, var(--dark-gray) 0%, #2d2a0f 100%);
+}
+
+.stat-card-danger { 
+  border-left: 4px solid var(--vibrant-orange);
+  background: linear-gradient(135deg, var(--dark-gray) 0%, #2d0f0f 100%);
+}
+
+.stat-card-purple { 
+  border-left: 4px solid var(--sky-blue);
+  background: linear-gradient(135deg, var(--dark-gray) 0%, #0f1f2d 100%);
+}
+
+/* Action Cards */
+.action-card-blue {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--electric-blue) 100%);
+  color: var(--white);
+  border: none;
+}
+
+.action-card-orange {
+  background: linear-gradient(135deg, var(--dark-orange) 0%, var(--amber) 100%);
+  color: var(--black);
+  border: none;
+}
+
+.action-card-dark {
+  background: linear-gradient(135deg, var(--charcoal) 0%, var(--medium-gray) 100%);
+  color: var(--white);
+  border: 2px solid var(--electric-blue);
+}
+
+/* Navigation */
+.nav-item {
+  position: relative;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  color: var(--dark-orange);
+}
+
+/* Professional Buttons */
+.btn-professional {
+  background: linear-gradient(135deg, var(--electric-blue) 0%, var(--royal-blue) 100%);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-professional:hover {
+  background: linear-gradient(135deg, var(--royal-blue) 0%, var(--navy) 100%);
+}
+
+.btn-orange {
+  background: linear-gradient(135deg, var(--dark-orange) 0%, var(--amber) 100%);
+  color: var(--black);
+  border: none;
+}
+
+.btn-orange:hover {
+  background: linear-gradient(135deg, var(--amber) 0%, var(--gold) 100%);
+}
+
+/* Progress Bars */
+.progress-bar {
+  background: var(--medium-gray);
+  border-radius: 4px;
+  overflow: hidden;
+  height: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+}
+
+.progress-blue { background: var(--electric-blue); }
+.progress-orange { background: var(--dark-orange); }
+
+/* Metric Highlights */
+.metric-highlight {
+  background: linear-gradient(135deg, var(--electric-blue) 0%, var(--dark-orange) 100%);
+  color: var(--white);
+  padding: 1.5rem;
+  border-radius: 8px;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Enhanced Tables */
+.elegant-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.elegant-table th {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--royal-blue) 100%);
+  color: var(--white);
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+  border: 1px solid var(--light-gray);
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.elegant-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  background: var(--dark-gray);
+  color: var(--silver);
 }
 
-.App-link {
-  color: #61dafb;
+.elegant-table tr:hover td {
+  background: var(--medium-gray);
+  color: var(--white);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* FORM INPUT STYLES - ADD THIS SECTION */
+.professional-input {
+  background: var(--dark-gray);
+  border: 2px solid var(--light-gray);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  color: var(--white);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.professional-input:focus {
+  outline: none;
+  border-color: var(--electric-blue);
+  box-shadow: 0 0 0 3px rgba(0, 116, 217, 0.1);
+}
+
+.professional-input::placeholder {
+  color: var(--light-gray);
+}
+
+/* Textarea specific styles */
+textarea.professional-input {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+/* Select dropdown styles */
+select.professional-input {
+  cursor: pointer;
+}
+
+/* Input group styles */
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--white);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* Form validation styles */
+.professional-input:invalid {
+  border-color: var(--vibrant-orange);
+}
+
+.professional-input:valid {
+  border-color: var(--dark-orange);
+}
+
+/* Disabled input styles */
+.professional-input:disabled {
+  background: var(--medium-gray);
+  color: var(--light-gray);
+  cursor: not-allowed;
 }
