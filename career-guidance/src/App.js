@@ -6,6 +6,7 @@ import Layout from './components/common/Layout';
 import './App.css';
 
 // Pages
+import Home from './pages/Home'; // ✅ ADD THIS - New Home page
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './components/student/StudentDashboard';
@@ -127,6 +128,9 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+      {/* ✅ HOME PAGE - Public accessible to all */}
+      <Route path="/" element={<Home />} />
+      
       {/* Public routes without footer */}
       <Route path="/login" element={
         <PublicRoute>
@@ -274,9 +278,6 @@ const AppRoutes = () => {
                 <CompanyManagement />
               </ProtectedRoute>
             } />
-            
-            {/* Default route */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
             
             {/* 404 route */}
             <Route path="*" element={
