@@ -1,3 +1,4 @@
+// backend/src/controllers/studentController.js
 const { db } = require('../config/firebase');
 
 // @desc    Get student applications
@@ -67,7 +68,7 @@ const applyForCourse = async (req, res) => {
   try {
     const applicationData = {
       ...req.body,
-      studentId: req.user.id, // Use authenticated user's ID
+      studentId: req.user.id,
       studentName: req.user.name,
       studentEmail: req.user.email,
       status: 'pending',
@@ -172,6 +173,16 @@ const getDashboard = async (req, res) => {
       });
     });
     
+    // Get student transcript
+    const transcriptSnapshot = await db.collection('transcripts')
+      .where('studentId', '==', studentId)
+      .get();
+    
+    let transcript = null;
+    if (!transcriptSnapshot.empty) {
+      transcript = transcriptSnapshot.docs[0].data();
+    }
+    
     // Calculate stats
     const stats = {
       totalApplications: applications.length,
@@ -183,15 +194,17 @@ const getDashboard = async (req, res) => {
       jobPending: jobApplications.filter(app => app.status === 'pending').length,
       jobReviewed: jobApplications.filter(app => app.status === 'reviewed').length,
       jobAccepted: jobApplications.filter(app => app.status === 'accepted').length,
-      jobRejected: jobApplications.filter(app => app.status === 'rejected').length
+      jobRejected: jobApplications.filter(app => app.status === 'rejected').length,
+      hasTranscript: !!transcript
     };
     
     res.json({
       success: true,
       data: {
         student: req.user,
-        applications: applications.slice(0, 5), // Recent 5 applications
-        jobApplications: jobApplications.slice(0, 5), // Recent 5 job applications
+        applications: applications.slice(0, 5),
+        jobApplications: jobApplications.slice(0, 5),
+        transcript: transcript,
         stats
       }
     });
@@ -206,7 +219,315 @@ const getDashboard = async (req, res) => {
   }
 };
 
-// JOB CONTROLLER METHODS - NEW
+// @desc    Upload student transcript
+// @route   POST /api/students/transcript
+// @access  Private (Student)
+const uploadTranscript = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    const transcriptData = {
+      ...req.body,
+      studentId: studentId,
+      studentName: req.user.name,
+      uploadedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    console.log('📚 Uploading transcript for student:', studentId);
+    
+    // Check if transcript already exists
+    const existingTranscriptSnapshot = await db.collection('transcripts')
+      .where('studentId', '==', studentId)
+      .get();
+    
+    let transcriptRef;
+    
+    if (!existingTranscriptSnapshot.empty) {
+      // Update existing transcript
+      transcriptRef = existingTranscriptSnapshot.docs[0].ref;
+      await transcriptRef.update(transcriptData);
+      console.log('✅ Transcript updated successfully');
+    } else {
+      // Create new transcript
+      transcriptRef = await db.collection('transcripts').add(transcriptData);
+      console.log('✅ Transcript uploaded successfully with ID:', transcriptRef.id);
+    }
+    
+    res.json({
+      success: true,
+      message: 'Transcript uploaded successfully',
+      data: {
+        id: transcriptRef.id,
+        ...transcriptData
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error uploading transcript:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error uploading transcript',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get student transcript
+// @route   GET /api/students/transcript
+// @access  Private (Student)
+const getTranscript = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    
+    console.log('📖 Fetching transcript for student:', studentId);
+    
+    const transcriptSnapshot = await db.collection('transcripts')
+      .where('studentId', '==', studentId)
+      .get();
+    
+    if (transcriptSnapshot.empty) {
+      return res.json({
+        success: true,
+        message: 'No transcript found',
+        data: null
+      });
+    }
+    
+    const transcript = transcriptSnapshot.docs[0].data();
+    
+    res.json({
+      success: true,
+      message: 'Transcript retrieved successfully',
+      data: transcript
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching transcript:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching transcript',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Accept admission offer
+// @route   POST /api/students/admission/accept
+// @access  Private (Student)
+const acceptAdmission = async (req, res) => {
+  try {
+    const { applicationId } = req.body;
+    const studentId = req.user.id;
+
+    console.log('🎓 Student accepting admission:', { applicationId, studentId });
+
+    // Get the accepted application
+    const acceptedAppRef = db.collection('applications').doc(applicationId);
+    const acceptedAppDoc = await acceptedAppRef.get();
+    
+    if (!acceptedAppDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    const acceptedApp = acceptedAppDoc.data();
+    
+    // Verify this application belongs to the student and is admitted
+    if (acceptedApp.studentId !== studentId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to accept this admission'
+      });
+    }
+
+    if (acceptedApp.status !== 'admitted') {
+      return res.status(400).json({
+        success: false,
+        message: 'This application is not in admitted status'
+      });
+    }
+
+    // Get all other admitted applications for this student
+    const otherAppsSnapshot = await db.collection('applications')
+      .where('studentId', '==', studentId)
+      .where('status', '==', 'admitted')
+      .get();
+
+    const batch = db.batch();
+
+    // Update accepted application to 'accepted'
+    batch.update(acceptedAppRef, {
+      status: 'accepted',
+      acceptedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+
+    // Reject all other admitted applications
+    otherAppsSnapshot.forEach(doc => {
+      if (doc.id !== applicationId) {
+        batch.update(doc.ref, {
+          status: 'rejected',
+          rejectionReason: 'Student accepted another offer',
+          updatedAt: new Date().toISOString()
+        });
+      }
+    });
+
+    await batch.commit();
+
+    console.log('✅ Admission acceptance processed successfully');
+
+    // Get waitlisted students for the rejected courses and promote them
+    await promoteWaitlistedStudents(otherAppsSnapshot);
+
+    res.json({
+      success: true,
+      message: 'Admission accepted successfully. Other offers have been declined.'
+    });
+
+  } catch (error) {
+    console.error('❌ Error accepting admission:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error accepting admission',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to promote waitlisted students
+const promoteWaitlistedStudents = async (admittedApplicationsSnapshot) => {
+  try {
+    const batch = db.batch();
+    
+    for (const doc of admittedApplicationsSnapshot.docs) {
+      const admittedApp = doc.data();
+      
+      if (admittedApp.status === 'admitted') {
+        // Get the first waitlisted student for this course
+        const waitlistedSnapshot = await db.collection('applications')
+          .where('courseId', '==', admittedApp.courseId)
+          .where('status', '==', 'pending')
+          .orderBy('applicationDate', 'asc')
+          .limit(1)
+          .get();
+
+        if (!waitlistedSnapshot.empty) {
+          const nextStudent = waitlistedSnapshot.docs[0];
+          batch.update(nextStudent.ref, {
+            status: 'admitted',
+            admittedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+
+          console.log(`✅ Promoted waitlisted student to admitted for course: ${admittedApp.courseName}`);
+        }
+      }
+    }
+    
+    if (batch._ops.length > 0) {
+      await batch.commit();
+    }
+  } catch (error) {
+    console.error('Error promoting waitlisted students:', error);
+  }
+};
+
+// @desc    Get qualified courses based on transcript
+// @route   GET /api/students/qualified-courses
+// @access  Private (Student)
+const getQualifiedCourses = async (req, res) => {
+  try {
+    const studentId = req.user.id;
+    
+    console.log('🎯 Getting qualified courses for student:', studentId);
+    
+    // Get student transcript
+    const transcriptSnapshot = await db.collection('transcripts')
+      .where('studentId', '==', studentId)
+      .get();
+    
+    if (transcriptSnapshot.empty) {
+      return res.status(400).json({
+        success: false,
+        message: 'No transcript found. Please upload your transcript first.'
+      });
+    }
+    
+    const transcript = transcriptSnapshot.docs[0].data();
+    
+    // Get all courses
+    const coursesSnapshot = await db.collection('courses').get();
+    const allCourses = [];
+    coursesSnapshot.forEach(doc => {
+      allCourses.push({
+        id: doc.id,
+        ...doc.data()
+      });
+    });
+    
+    // Filter qualified courses
+    const qualifiedCourses = allCourses.filter(course => 
+      checkCourseQualification(course, transcript)
+    );
+    
+    console.log(`✅ Found ${qualifiedCourses.length} qualified courses out of ${allCourses.length} total courses`);
+    
+    res.json({
+      success: true,
+      message: 'Qualified courses retrieved successfully',
+      data: {
+        qualifiedCourses,
+        totalCourses: allCourses.length,
+        transcript: transcript
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting qualified courses:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting qualified courses',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to check course qualification
+const checkCourseQualification = (course, transcript) => {
+  if (!course.requirements || !transcript.grades) return true;
+  
+  const requiredSubjects = course.requirements;
+  const studentGrades = transcript.grades;
+  
+  // Check if student has all required subjects
+  const hasAllSubjects = requiredSubjects.every(subject => 
+    Object.keys(studentGrades).includes(subject)
+  );
+  
+  if (!hasAllSubjects) return false;
+  
+  // Simple grading system
+  const gradePoints = {
+    'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1, 'F': 0
+  };
+  
+  // Calculate average grade for required subjects
+  let totalPoints = 0;
+  requiredSubjects.forEach(subject => {
+    totalPoints += gradePoints[studentGrades[subject]] || 0;
+  });
+  
+  const averageGrade = totalPoints / requiredSubjects.length;
+  
+  // Qualify if average grade is C or above
+  return averageGrade >= 3;
+};
+
+// JOB CONTROLLER METHODS
 
 // @desc    Get available jobs for students
 // @route   GET /api/students/jobs
@@ -301,7 +622,7 @@ const applyForJob = async (req, res) => {
     
     // Check if job exists and is open
     const jobDoc = await db.collection('jobs').doc(jobId).get();
-    if (!jobDoc.exists()) {
+    if (!jobDoc.exists) {
       return res.status(404).json({
         success: false,
         message: 'Job not found'
@@ -449,6 +770,10 @@ module.exports = {
   getStudentApplications,
   applyForCourse,
   getDashboard,
+  uploadTranscript,
+  getTranscript,
+  acceptAdmission,
+  getQualifiedCourses,
   getAvailableJobs,
   applyForJob,
   getMyJobApplications

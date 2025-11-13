@@ -11,11 +11,14 @@ const InstitutionCourses = () => {
   
   const [institution, setInstitution] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [qualifiedCourses, setQualifiedCourses] = useState([]);
   const [applications, setApplications] = useState([]);
+  const [transcript, setTranscript] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showOnlyQualified, setShowOnlyQualified] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -49,6 +52,18 @@ const InstitutionCourses = () => {
         }
       }
 
+      // Load student transcript
+      const transcriptResponse = await studentService.getTranscript();
+      if (transcriptResponse.success && transcriptResponse.data) {
+        setTranscript(transcriptResponse.data);
+        
+        // Calculate qualified courses
+        const qualified = coursesResponse.data.filter(course => 
+          checkCourseQualification(course, transcriptResponse.data)
+        );
+        setQualifiedCourses(qualified);
+      }
+
     } catch (err) {
       setError(err.message || 'Failed to load institution data');
     } finally {
@@ -59,6 +74,37 @@ const InstitutionCourses = () => {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Course qualification checker
+  const checkCourseQualification = (course, studentTranscript) => {
+    if (!course.requirements || !studentTranscript?.grades) return true;
+    
+    const requiredSubjects = course.requirements;
+    const studentGrades = studentTranscript.grades;
+    
+    // Check if student has all required subjects
+    const hasAllSubjects = requiredSubjects.every(subject => 
+      Object.keys(studentGrades).includes(subject)
+    );
+    
+    if (!hasAllSubjects) return false;
+    
+    // Simple grading system
+    const gradePoints = {
+      'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1, 'F': 0
+    };
+    
+    // Calculate average grade for required subjects
+    let totalPoints = 0;
+    requiredSubjects.forEach(subject => {
+      totalPoints += gradePoints[studentGrades[subject]] || 0;
+    });
+    
+    const averageGrade = totalPoints / requiredSubjects.length;
+    
+    // Qualify if average grade is C or above
+    return averageGrade >= 3;
+  };
 
   const handleApply = async (courseId, courseName) => {
     try {
@@ -135,6 +181,8 @@ const InstitutionCourses = () => {
   const canApplyToMore = () => {
     return getApplicationsCount() < 2;
   };
+
+  const displayCourses = showOnlyQualified && transcript ? qualifiedCourses : courses;
 
   if (loading) {
     return (
@@ -238,6 +286,46 @@ const InstitutionCourses = () => {
               )}
               <div className="flex items-center">
                 {courses.length} course{courses.length !== 1 ? 's' : ''} available
+                {transcript && (
+                  <span className="ml-2 text-green-400">
+                    ({qualifiedCourses.length} qualified)
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Qualification Filter */}
+        {transcript && (
+          <div className="elegant-card p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-1">🎓 Smart Course Matching</h3>
+                <p className="text-gray-300 text-sm">
+                  Based on your transcript, we found {qualifiedCourses.length} courses that match your qualifications.
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center cursor-pointer">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={showOnlyQualified}
+                      onChange={(e) => setShowOnlyQualified(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`block w-14 h-8 rounded-full ${
+                      showOnlyQualified ? 'bg-green-500' : 'bg-gray-600'
+                    }`}></div>
+                    <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition ${
+                      showOnlyQualified ? 'transform translate-x-6' : ''
+                    }`}></div>
+                  </div>
+                  <div className="ml-3 text-gray-300 font-medium">
+                    Show only qualified courses
+                  </div>
+                </label>
               </div>
             </div>
           </div>
@@ -261,21 +349,43 @@ const InstitutionCourses = () => {
 
         {/* Courses List */}
         <div className="elegant-card p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">Available Courses</h2>
+          <h2 className="text-xl font-semibold text-white mb-6">
+            {showOnlyQualified ? 'Courses You Qualify For' : 'Available Courses'}
+            {transcript && (
+              <span className="text-sm text-gray-400 ml-2">
+                ({displayCourses.length} of {courses.length})
+              </span>
+            )}
+          </h2>
           
-          {courses.length > 0 ? (
+          {displayCourses.length > 0 ? (
             <div className="space-y-6">
-              {courses.map((course) => {
+              {displayCourses.map((course) => {
                 const applicationStatus = getApplicationStatus(course.id);
                 const isApplied = !!applicationStatus;
+                const isQualified = transcript ? checkCourseQualification(course, transcript) : true;
                 
                 return (
-                  <div key={course.id} className="border border-gray-700 rounded-lg p-6 hover:border-blue-500 transition-colors">
+                  <div key={course.id} className={`border rounded-lg p-6 transition-colors ${
+                    isQualified ? 'border-green-600 hover:border-green-500' : 'border-gray-700 hover:border-blue-500'
+                  }`}>
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-white mb-2">
-                          {course.name}
-                        </h3>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className="text-lg font-semibold text-white">
+                            {course.name}
+                          </h3>
+                          {!isQualified && transcript && (
+                            <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs">
+                              Not Qualified
+                            </span>
+                          )}
+                          {isQualified && transcript && (
+                            <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs">
+                              Qualified
+                            </span>
+                          )}
+                        </div>
                         {applicationStatus && (
                           <span className={`status-badge ${
                             applicationStatus === 'pending' ? 'bg-yellow-500 text-black' :
@@ -332,6 +442,10 @@ const InstitutionCourses = () => {
                           <span className="flex items-center text-green-400">
                             Application {applicationStatus}
                           </span>
+                        ) : !isQualified && transcript ? (
+                          <span className="flex items-center text-red-400">
+                            Does not meet requirements
+                          </span>
                         ) : (
                           <span>
                             {canApplyToMore() ? 'Ready to apply' : 'Application limit reached'}
@@ -341,9 +455,9 @@ const InstitutionCourses = () => {
                       
                       <button
                         onClick={() => handleApply(course.id, course.name)}
-                        disabled={isApplied || !canApplyToMore() || applying === course.id}
+                        disabled={isApplied || !canApplyToMore() || applying === course.id || (!isQualified && transcript)}
                         className={`px-4 py-2 rounded-md text-sm font-medium ${
-                          isApplied
+                          isApplied || (!isQualified && transcript)
                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                             : !canApplyToMore()
                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
@@ -356,6 +470,8 @@ const InstitutionCourses = () => {
                           'Applied'
                         ) : !canApplyToMore() ? (
                           'Limit Reached'
+                        ) : !isQualified && transcript ? (
+                          'Not Qualified'
                         ) : (
                           'Apply Now'
                         )}
@@ -368,10 +484,22 @@ const InstitutionCourses = () => {
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mx-auto mb-4 text-4xl">📚</div>
-              <h3 className="text-lg font-medium text-white mb-2">No courses available</h3>
+              <h3 className="text-lg font-medium text-white mb-2">
+                {showOnlyQualified ? 'No qualified courses found' : 'No courses available'}
+              </h3>
               <p className="text-gray-400">
-                This institution doesn't have any courses listed at the moment.
+                {showOnlyQualified 
+                  ? 'Your current qualifications do not meet the requirements for any courses at this institution.' 
+                  : 'This institution doesn\'t have any courses listed at the moment.'}
               </p>
+              {showOnlyQualified && (
+                <button
+                  onClick={() => setShowOnlyQualified(false)}
+                  className="mt-4 btn-professional"
+                >
+                  Show All Courses
+                </button>
+              )}
             </div>
           )}
         </div>

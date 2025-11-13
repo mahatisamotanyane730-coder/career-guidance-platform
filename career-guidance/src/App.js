@@ -1,3 +1,4 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -6,14 +7,15 @@ import Layout from './components/common/Layout';
 import './App.css';
 
 // Pages
-import Home from './pages/Home'; // ✅ ADD THIS - New Home page
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StudentDashboard from './components/student/StudentDashboard';
 import InstitutionDashboard from './components/institution/InstitutionDashboard';
 import InstitutionList from './components/student/InstitutionList';
 import InstitutionCourses from './components/student/InstitutionCourses';
-import JobPortal from './components/student/JobPortal';
+import QualifiedCourses from './components/student/QualifiedCourses';
+import QualifiedJobs from './components/student/QualifiedJobs'; // 🆕 ADD THIS IMPORT
 
 // ✅ ADD THIS MISSING IMPORT
 import ApplicationStatus from './components/student/ApplicationStatus';
@@ -171,6 +173,20 @@ const AppRoutes = () => {
               </ProtectedRoute>
             } />
             
+            {/* 🆕 QUALIFIED COURSES ROUTE */}
+            <Route path="/student/qualified-courses" element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <QualifiedCourses />
+              </ProtectedRoute>
+            } />
+            
+            {/* 🆕 QUALIFIED JOBS ROUTE */}
+            <Route path="/student/jobs" element={
+              <ProtectedRoute allowedRoles={['student']}>
+                <QualifiedJobs />
+              </ProtectedRoute>
+            } />
+            
             {/* ✅ ADD THIS MISSING ROUTE FOR "VIEW MY APPLICATIONS" */}
             <Route path="/student/applications" element={
               <ProtectedRoute allowedRoles={['student']}>
@@ -178,10 +194,10 @@ const AppRoutes = () => {
               </ProtectedRoute>
             } />
             
-            {/* Job Portal Route */}
+            {/* Job Portal Route (Legacy - redirect to new jobs) */}
             <Route path="/jobs" element={
               <ProtectedRoute allowedRoles={['student']}>
-                <JobPortal />
+                <Navigate to="/student/jobs" replace />
               </ProtectedRoute>
             } />
             

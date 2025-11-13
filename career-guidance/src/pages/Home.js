@@ -72,23 +72,35 @@ const Home = () => {
             </div>
           )}
 
-          {/* Stats Section */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
-            <div className="text-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <div className="text-2xl md:text-3xl font-bold text-blue-400">50+</div>
-              <div className="text-gray-400">Institutions</div>
+          {/* Key Benefits Section */}
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-4">Smart Matching</div>
+              <div className="text-gray-400 text-sm">
+                Our intelligent system matches your qualifications with suitable courses and career opportunities, 
+                ensuring you find the perfect fit for your skills and aspirations.
+              </div>
             </div>
-            <div className="text-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <div className="text-2xl md:text-3xl font-bold text-green-400">100+</div>
-              <div className="text-gray-400">Courses</div>
+            <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="text-2xl md:text-3xl font-bold text-green-400 mb-4">Seamless Process</div>
+              <div className="text-gray-400 text-sm">
+                From course applications to job placements, experience a streamlined journey with real-time tracking 
+                and instant notifications at every step.
+              </div>
             </div>
-            <div className="text-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <div className="text-2xl md:text-3xl font-bold text-purple-400">10+</div>
-              <div className="text-gray-400">Companies</div>
+            <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="text-2xl md:text-3xl font-bold text-purple-400 mb-4">Career Ready</div>
+              <div className="text-gray-400 text-sm">
+                Build professional CVs, connect with top employers, and access career guidance to transition 
+                smoothly from education to employment.
+              </div>
             </div>
-            <div className="text-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <div className="text-2xl md:text-3xl font-bold text-orange-400">1000+</div>
-              <div className="text-gray-400">Students</div>
+            <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
+              <div className="text-2xl md:text-3xl font-bold text-orange-400 mb-4">Local Focus</div>
+              <div className="text-gray-400 text-sm">
+                Specifically designed for Lesotho's education and job market, featuring local institutions 
+                and companies that understand the unique opportunities in our country.
+              </div>
             </div>
           </div>
         </div>
@@ -157,29 +169,80 @@ const Home = () => {
               <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 1
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Register</h3>
-              <p className="text-gray-400">Create your account as a student, institution, or employer</p>
+              <h3 className="text-lg font-semibold mb-2 text-white">Create Profile</h3>
+              <p className="text-gray-400">Sign up and complete your academic profile with your qualifications and interests</p>
             </div>
             <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
               <div className="w-16 h-16 bg-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 2
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Explore</h3>
-              <p className="text-gray-400">Browse institutions, courses, or job opportunities</p>
+              <h3 className="text-lg font-semibold mb-2 text-white">Discover Options</h3>
+              <p className="text-gray-400">Browse matched courses and institutions based on your profile and preferences</p>
             </div>
             <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
               <div className="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 3
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Apply</h3>
-              <p className="text-gray-400">Submit applications for courses or jobs</p>
+              <h3 className="text-lg font-semibold mb-2 text-white">Apply & Connect</h3>
+              <p className="text-gray-400">Submit applications and connect with institutions and potential employers</p>
             </div>
             <div className="text-center bg-gray-800 p-6 rounded-lg border border-gray-700">
               <div className="w-16 h-16 bg-orange-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 4
               </div>
-              <h3 className="text-lg font-semibold mb-2 text-white">Succeed</h3>
-              <p className="text-gray-400">Track progress and achieve your career objectives</p>
+              <h3 className="text-lg font-semibold mb-2 text-white">Launch Career</h3>
+              <p className="text-gray-400">Receive offers, build your CV, and start your professional journey</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Platform Benefits Section */}
+      <div className="bg-gray-800 py-16 border-t border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-4">Why Choose CareerGuide LS?</h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              Our platform is designed specifically for Lesotho's unique educational and employment landscape
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Personalized Guidance</h3>
+              <p className="text-gray-400 text-sm">
+                Get course and career recommendations tailored to your academic background, skills, and career aspirations.
+              </p>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Direct Applications</h3>
+              <p className="text-gray-400 text-sm">
+                Apply to multiple institutions and courses through a single platform with streamlined application processes.
+              </p>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Career Transition</h3>
+              <p className="text-gray-400 text-sm">
+                Smooth transition from student to professional with job matching, CV building, and employer connections.
+              </p>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Real-time Updates</h3>
+              <p className="text-gray-400 text-sm">
+                Stay informed with instant notifications about application status, deadlines, and new opportunities.
+              </p>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Local Expertise</h3>
+              <p className="text-gray-400 text-sm">
+                Access institutions and companies that understand Lesotho's educational system and job market needs.
+              </p>
+            </div>
+            <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-semibold mb-3 text-white">Comprehensive Support</h3>
+              <p className="text-gray-400 text-sm">
+                From course selection to career placement, we provide support at every stage of your journey.
+              </p>
             </div>
           </div>
         </div>
@@ -191,7 +254,8 @@ const Home = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl font-bold text-white mb-4">Ready to Start Your Journey?</h2>
             <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">
-              Join thousands of students, institutions, and companies transforming education and employment in Lesotho.
+              Join students, institutions, and companies transforming education and employment in Lesotho. 
+              Take the first step toward your future today.
             </p>
             <Link
               to="/register"

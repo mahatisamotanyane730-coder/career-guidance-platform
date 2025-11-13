@@ -1,48 +1,43 @@
+// backend/src/routes/studentRoutes.js
 const express = require('express');
-const { 
-  getDashboard, 
-  getStudentApplications, 
+const router = express.Router();
+const {
+  getStudentApplications,
   applyForCourse,
+  getDashboard,
+  uploadTranscript,
+  getTranscript,
+  acceptAdmission,
+  getQualifiedCourses,
   getAvailableJobs,
   applyForJob,
   getMyJobApplications
 } = require('../controllers/studentController');
-const { authenticate, authorize } = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
-const router = express.Router();
+// Apply auth middleware to all routes
+router.use(auth);
 
-// All routes require authentication
-router.use(authenticate);
+// Application routes
+router.get('/applications', getStudentApplications);
+router.post('/applications', applyForCourse);
 
-// @desc    Get student dashboard
-// @route   GET /api/students/dashboard
-// @access  Private (Student)
-router.get('/dashboard', authorize('student'), getDashboard);
+// Dashboard routes
+router.get('/dashboard', getDashboard);
 
-// @desc    Get student applications
-// @route   GET /api/students/applications
-// @access  Private (Student)
-router.get('/applications', authorize('student'), getStudentApplications);
+// Transcript routes
+router.post('/transcript', uploadTranscript);
+router.get('/transcript', getTranscript);
 
-// @desc    Apply for course
-// @route   POST /api/students/applications
-// @access  Private (Student)
-router.post('/applications', authorize('student'), applyForCourse);
+// Admission routes
+router.post('/admission/accept', acceptAdmission);
 
-// JOB ROUTES - NEW
-// @desc    Get available jobs
-// @route   GET /api/students/jobs
-// @access  Private (Student)
-router.get('/jobs', authorize('student'), getAvailableJobs);
+// Course qualification routes
+router.get('/qualified-courses', getQualifiedCourses);
 
-// @desc    Apply for job
-// @route   POST /api/students/jobs/apply
-// @access  Private (Student)
-router.post('/jobs/apply', authorize('student'), applyForJob);
-
-// @desc    Get student's job applications
-// @route   GET /api/students/job-applications
-// @access  Private (Student)
-router.get('/job-applications', authorize('student'), getMyJobApplications);
+// Job routes
+router.get('/jobs', getAvailableJobs);
+router.post('/jobs/apply', applyForJob);
+router.get('/job-applications', getMyJobApplications);
 
 module.exports = router;
