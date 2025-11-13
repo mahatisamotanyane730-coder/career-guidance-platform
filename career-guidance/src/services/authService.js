@@ -3,9 +3,11 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 export const authService = {
   // Register new user
@@ -23,35 +25,130 @@ export const authService = {
       const user = userCredential.user;
       console.log('✅ Firebase auth user created:', user.uid);
 
-      // Prepare user data for Firestore
-      const userProfile = {
-        uid: user.uid,
-        email: email,
-        firstName: userFirstName,
-        lastName: userLastName,
-        userType: userType,
-        role: userType,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        emailVerified: false,
-        status: 'active'
-      };
-
-      console.log('💾 Saving user profile:', userProfile);
-
-      // Save user profile to Firestore
-      await setDoc(doc(db, 'users', user.uid), userProfile);
-      console.log('✅ User profile saved to Firestore');
+      // Send email verification immediately after registration
+      console.log('📧 Sending email verification...');
+      try {
+        await sendEmailVerification(user, {
+          url: `${window.location.origin}/email-verified`,
+          handleCodeInApp: true
+        });
+        console.log('✅ Email verification sent to:', email);
+        
+        // Store that we sent verification
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: email,
+          firstName: userFirstName,
+          lastName: userLastName,
+          userType: userType,
+          role: userType,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          emailVerified: false,
+          status: 'active',
+          verificationSentAt: serverTimestamp(),
+          lastVerificationSent: serverTimestamp(),
+          verificationAttempts: 1
+        });
+        
+      } catch (emailError) {
+        console.error('❌ Email verification failed:', emailError);
+        // Still save user but log the error
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: email,
+          firstName: userFirstName,
+          lastName: userLastName,
+          userType: userType,
+          role: userType,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          emailVerified: false,
+          status: 'active',
+          verificationError: emailError.message
+        });
+      }
 
       return { 
         uid: user.uid,
         email: user.email,
         emailVerified: user.emailVerified,
-        ...userProfile 
+        firstName: userFirstName,
+        lastName: userLastName,
+        userType: userType
       };
       
     } catch (error) {
       console.error('❌ Registration error:', error);
+      throw new Error(this.getErrorMessage(error.code));
+    }
+  },
+
+  // Resend email verification
+  async resendEmailVerification() {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      console.log('📧 Resending email verification to:', user.email);
+      await sendEmailVerification(user, {
+        url: `${window.location.origin}/email-verified`,
+        handleCodeInApp: true
+      });
+      
+      // Update Firestore with new verification timestamp
+      await updateDoc(doc(db, 'users', user.uid), {
+        lastVerificationSent: serverTimestamp(),
+        verificationAttempts: (await getDoc(doc(db, 'users', user.uid))).data()?.verificationAttempts + 1 || 1
+      });
+
+      console.log('✅ Email verification resent successfully');
+      return { success: true, message: 'Verification email sent successfully' };
+    } catch (error) {
+      console.error('❌ Resend verification error:', error);
+      throw new Error(this.getErrorMessage(error.code));
+    }
+  },
+
+  // Check and refresh email verification status
+  async checkEmailVerification() {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      // Reload user to get latest email verification status
+      await user.reload();
+      const updatedUser = auth.currentUser;
+      
+      // Update Firestore if email was verified
+      if (updatedUser.emailVerified) {
+        await updateDoc(doc(db, 'users', user.uid), {
+          emailVerified: true,
+          updatedAt: serverTimestamp()
+        });
+        console.log('✅ Email verification status updated in Firestore');
+      }
+
+      return { emailVerified: updatedUser.emailVerified };
+    } catch (error) {
+      console.error('❌ Check verification error:', error);
+      throw error;
+    }
+  },
+
+  // Send password reset email
+  async sendPasswordResetEmail(email) {
+    try {
+      console.log('📧 Sending password reset email to:', email);
+      await sendPasswordResetEmail(auth, email);
+      console.log('✅ Password reset email sent successfully');
+      return { success: true, message: 'Password reset email sent successfully' };
+    } catch (error) {
+      console.error('❌ Password reset error:', error);
       throw new Error(this.getErrorMessage(error.code));
     }
   },
@@ -65,6 +162,12 @@ export const authService = {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log('✅ Firebase auth successful:', user.uid);
+
+      // Check if email is verified
+      if (!user.emailVerified) {
+        console.warn('⚠️ User email not verified:', user.email);
+        // Don't block login, but we'll track this status
+      }
 
       // Wait a moment to ensure Firestore is ready
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -104,7 +207,7 @@ export const authService = {
         userData = {
           firstName: 'User',
           lastName: '',
-          userType: 'student', // Default to student
+          userType: 'student',
           status: 'active'
         };
       }
@@ -124,6 +227,7 @@ export const authService = {
 
       console.log('🔑 Final user data for context:', fullUserData);
       console.log('🎯 User role confirmed:', fullUserData.userType);
+      console.log('📧 Email verification status:', fullUserData.emailVerified ? 'Verified' : 'Not Verified');
       return fullUserData;
       
     } catch (error) {
@@ -141,6 +245,10 @@ export const authService = {
           if (user) {
             try {
               console.log('🔄 Getting current user data for:', user.uid);
+              
+              // Refresh email verification status
+              await user.reload();
+              const refreshedUser = auth.currentUser;
               
               // Wait a moment to ensure Firestore is ready
               await new Promise(resolve => setTimeout(resolve, 500));
@@ -180,16 +288,16 @@ export const authService = {
                 userData = {
                   firstName: 'User',
                   lastName: '',
-                  userType: 'student', // Default to student
+                  userType: 'student',
                   status: 'active'
                 };
               }
 
               // Ensure all required fields are present
               const fullUserData = {
-                uid: user.uid,
-                email: user.email,
-                emailVerified: user.emailVerified,
+                uid: refreshedUser.uid,
+                email: refreshedUser.email,
+                emailVerified: refreshedUser.emailVerified,
                 firstName: userData?.firstName || 'User',
                 lastName: userData?.lastName || '',
                 userType: userData?.userType || 'student',
@@ -200,6 +308,7 @@ export const authService = {
 
               console.log('🔑 Final current user data:', fullUserData);
               console.log('🎯 Current user role confirmed:', fullUserData.userType);
+              console.log('📧 Current email verification status:', fullUserData.emailVerified ? 'Verified' : 'Not Verified');
               resolve(fullUserData);
             } catch (error) {
               console.error('Error getting user data:', error);
@@ -236,7 +345,7 @@ export const authService = {
     }
   },
 
-  // Improved Error message helper
+  // Improved Error message helper - FIXED duplicate keys
   getErrorMessage(errorCode) {
     const errorMessages = {
       'auth/invalid-email': 'Invalid email address format',
@@ -248,7 +357,7 @@ export const authService = {
       'auth/email-already-in-use': 'An account with this email already exists',
       'auth/weak-password': 'Password should be at least 6 characters long',
       'auth/network-request-failed': 'Network error. Please check your internet connection and try again.',
-      'auth/too-many-requests': 'Too many failed login attempts. Please try again later.',
+      'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
       'auth/operation-not-allowed': 'Email/password authentication is not enabled. Please contact support.',
       'auth/requires-recent-login': 'Please log in again to complete this action.',
       'auth/account-exists-with-different-credential': 'An account already exists with the same email address but different sign-in credentials.',
